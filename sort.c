@@ -1,11 +1,10 @@
 #include "sort.h"
 
-void Swap(int* array, int begin, int end){
+void Swap(int* array, int i, int j){
 	
-	int tmp;
-	tmp = array[begin];
-	array[begin] = array[end];
-	array[end] = tmp;
+	int tmp = array[i];
+	array[i] = array[j];
+	array[j] = tmp;
 	
 }
 
@@ -41,6 +40,11 @@ void insertSort(int* array, int n){
 }
 
 // 2. 希尔排序: 多轮的插入排序.(因为插入排序在接近有序的时候性能是最好的)
+// 时间复杂度: 最坏:O(N^1.3) 最好(有序数组,内部循环不执行):O(N)(这个O(N)前的系数大于插入排序)
+// 空间复杂度: O(1)
+// 稳定性: 不稳定,预排序会破坏稳定性, 数据可能会被分到不同组
+// 数据敏感: 敏感
+
 // 数据被分成多组, 组内进行插入排序, 最终整体进行插入排序
 // 先做预排序, 多组数据交替进行预排序, 跨度比插入排序大了 元素移动次数也就变少了 提高性能
 // 不是一组数据插入排序完成后 再进行另一组的排序, 而是多组数据按照数据的顺序进行交替的排序
@@ -58,67 +62,82 @@ void shellSort(int* array, int n){
 			int end = i;
 			// 要插入的元素为当前元素加上间隔后的元素
 			int key = array[end + gap];
+			// 若在遍历的过程中遇到了比插入元素大的数据 那就把大的放在后面(覆盖),key已保存值,
 			while (end >= 0 && array[end] > key){
-				// 把end的元素放在end+gap的位置
+				// 把end的元素放在end+gap的位置 相当于end的位置空了出来,
 				array[end + gap] = array[end];
 				end -= gap;
 			}
+			// 遍历结束 在也找不到比key大的值时(key最小) 直接将可以放在end+gap(此时end为负数,跳出上面循环, key为最小 end+gap刚好在第一个位置)
 			array[end + gap] = key;
 		}
 	}
 }
 
-//// 3. 选择排序:最慢的算法
-//// 时间复杂度: O(N^2) 任何情况下都是N^2
-//// 空间复杂度: O(1) 没有开空间 都是局部变量
-//// 稳定性: 稳定
-//// 数据敏感: 不敏感的 (和原始数据没关系 不管原始怎样 都走)
-//void selectSort(int* array, int n){
-//
-//	for (int i = n; i > 0; --i){
-//		// 每次选一个最小的值, 存入未排序数据的起始位置 n-i(第一次相当于n-n) 起始位置 i随
-//		int start = n - i;
-//		int min = start;
-//		// 从其实位置开始 向后遍历
-//		for (int j = start; j < n; ++j){
-//			// 如果当前数据小于最小值 交换
-//			if (array[j] < array[min]){
-//				min = j;
-//			}
-//			swap(array, start, min);
-//		}
-//	}
-//}
-//
-//
-//// 法2比法1快
-//void selectSort2(int* array, int n){
-//	int begin = 0;
-//	int end = n - 1;
-//	int max, min;
-//	// 元素不少于两个
-//	while (begin < end){
-//		// 每次找一个最大值和最小值所在的位置
-//		min = max = begin;
-//		for (int j = begin + 1; j <= end; ++j){
-//			if (array[j] > array[max]) // (arr[j] >= arr[max) 此时就稳定了
-//				max = j;     // 最大值选前面(大的选后面就稳定了)
-//			if (array[j] < array[min])
-//				min = j;     // 最小值选前面
-//		}
-//		// 最小值和起始位置进行交换
-//		swap(array, begin, min);
-//		// 最大值和结束位置交换 如果最大值的位置在begin处, 此时需要更新
-//		if (max == begin)
-//			max = min;
-//		swap(array, end, max);
-//
-//		++begin;
-//		--end;
-//	}
-//}
-//
-//
+// 3. 选择排序:最慢的算法 从未排序的数据中选择一个最值, 把它放到合适位置(最小值放在未排序数据的头部位置, 最大值放在尾部位置)
+// 时间复杂度: O(N^2) 任何情况下都是N^2
+// 空间复杂度: O(1) 没有开空间 都是局部变量
+// 稳定性: 稳定
+// 数据敏感: 不敏感的 (和原始数据没关系 不管原始怎样 都走)
+void selectSort(int* array, int n){
+	// i为未排序的元素个数
+	for (int i = n; i > 0; --i){
+		// 每次选一个最小的值, 存入未排序数据的起始位置 n-i(第一次相当于n-n) 
+		// i随循环减小 起始位置后移
+		int start = n - i;
+		int min = start;
+		// 从起始位置开始 向后遍历,寻找最小值
+		for (int j = start; j < n; ++j){
+			// 如果当前数据小于最小值 让最小值的位置变为j, 
+			if (array[j] < array[min])
+				min = j;	
+		}
+        // 交换起始位置和最小位置的元素
+		Swap(array, start, min);
+	}
+}
+
+
+// 法2比法1快
+// 每次选两个值, 一个最大(放在未排序的尾部),一个最小(放在未排序的起始),
+void selectSort2(int* array, int n){
+	int begin = 0;// 起始位置
+	int end = n - 1;// 尾部位置
+	int max, min;
+	// 元素不少于两个
+	while (begin < end){
+		// 每次找一个最大值和最小值所在的位置 (先让最小值和最大值都放在起始位置)
+		min = max = begin;
+		// 从当前位置的下一个元素开始遍历(也可以从当前位置开始)
+		for (int j = begin + 1; j <= end; ++j){
+			// 如当前位置更大 则让最大值的位置变为j
+			if (array[j] > array[max]) // (arr[j] >= arr[max) 此时就稳定了
+				max = j;     // 最大值选前面(大的选后面就稳定了)
+			// 如当前位置更小, 则让最小值的位置变为j
+			if (array[j] < array[min])
+				min = j;     // 最小值选前面
+		}
+
+		// 此时找到了最值,min和begin进行交换, max和end交换
+		/* Swap(array, begin, min);
+		 Swap(array, end, max);*/
+
+		// 上面操作会产生错误 忽略了若begin处为剩余未排序数据中的最大值,
+		// 经过第一步的min和begin交换后, 会丢失最大值, 此时真正的max在原min处 而原max处却变成了min
+		// 直接进行max和end交换会使最小值放到end处,而begin处则变成了未排序之前的最后一个元素)
+		// 需将
+		Swap(array, begin, min);
+		// 最大值和结束位置交换 
+		if (max == begin)
+			max = min;
+		Swap(array, end, max);
+
+		++begin;
+		--end;
+	}
+}
+
+
 //// 4. 堆排序(降序->建小堆  升序->建大堆)
 ////  获取堆顶 --> 向下调整
 //// 向下调整时间复杂度为O(logN)
