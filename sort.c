@@ -1,4 +1,5 @@
 #include "sort.h"
+#include "stack.h"
 
 void Swap(int* array, int i, int j){
 	
@@ -41,7 +42,7 @@ void insertSort(int* array, int n){
 
 // 2. 希尔排序: 多轮的插入排序.(因为插入排序在接近有序的时候性能是最好的)
 // 时间复杂度: 最坏:O(N^1.3) 最好(有序数组,内部循环不执行):O(N)(这个O(N)前的系数大于插入排序)
-// 空间复杂度: O(1)
+// 空间复杂度: O(1) 不需要开空间
 // 稳定性: 不稳定,预排序会破坏稳定性, 数据可能会被分到不同组
 // 数据敏感: 敏感
 
@@ -77,8 +78,8 @@ void shellSort(int* array, int n){
 // 3. 选择排序:最慢的算法 从未排序的数据中选择一个最值, 把它放到合适位置(最小值放在未排序数据的头部位置, 最大值放在尾部位置)
 // 时间复杂度: O(N^2) 任何情况下都是N^2
 // 空间复杂度: O(1) 没有开空间 都是局部变量
-// 稳定性: 稳定
-// 数据敏感: 不敏感的 (和原始数据没关系 不管原始怎样 都走)
+// 稳定性: 不稳定
+// 数据敏感: 不敏感的 (和原始数据没关系 不管原始怎样 都走遍历)
 void selectSort(int* array, int n){
 	// i为未排序的元素个数
 	for (int i = n; i > 0; --i){
@@ -138,90 +139,125 @@ void selectSort2(int* array, int n){
 }
 
 
-//// 4. 堆排序(降序->建小堆  升序->建大堆)
-////  获取堆顶 --> 向下调整
-//// 向下调整时间复杂度为O(logN)
-//// 空间复杂度为O(1)
-//// 稳定性: 不稳定 --> 向下调整可能会破坏相对位置
-//// 数据敏感: 每次都要进行完整的向下调整, 不敏感(数据是否有序对性能没多大影响)
-//// 
-//// 建堆是从最后一个非叶子结点开始进行向下调整
-//// 假如现在是大堆, 堆顶为第一大,
-//// 交换(堆顶和堆尾) -> 向下调整(堆顶为第二大) -> 交换(堆顶和队尾)
-//// 升序
-//// 时间复杂度为O(nlogn)
-//// n为size, parent为父结点 
-//void shiftDown(int* array, int n, int parent){
-//	int child = 2 * parent + 1;
-//	while (child < n){
-//		if (child + 1 < n && array[child + 1] > array[child])
-//			++child;
-//			if (array[child] > array[parent]){
-//				swap(array, child, parent);
-//				parent = child;
-//				child = 2 * parent + 1;
-//			}
-//			else
-//				break;
-//	}
-//}
-//
+// 4. 堆排序(降序->建小堆  升序->建大堆)
+// 首先建堆 --> 获取堆顶 --> 向下调整
+// 时间复杂度: O(logN)
+// 空间复杂度: O(1)
+// 稳定性: 不稳定 --> 向下调整可能会破坏相对位置
+// 数据敏感: 每次都要进行完整的向下调整, 不敏感(数据是否有序对性能没多大影响)
+// 
+// 1. 建堆是从最后一个非叶子结点开始进行向下调整
+// 假如现在是大堆, 堆顶为第一大,
+// 2. 交换(堆顶和堆尾)
+// 3. 对剩余元素(--end)构成的堆进行向下调整(堆顶为第二大)
+// 4. 交换(堆顶和队尾) 
+// 5. 循环
+// 升序
+// 时间复杂度为O(nlogn)
+// n为size, parent为父结点 
+void shiftDown(int* array, int n, int parent){
+	// 先找到孩子的位置
+	int child = 2 * parent + 1;
+	// child<n 则存在
+	while (child < n){
+		// 同时也要判断右孩子是否存在(<n) 且当右孩子大于左孩子时 取右孩子, 否则 依旧为左孩子
+		if (child + 1 < n && array[child + 1] > array[child])
+			++child;
+		// 比较孩子和父结点值
+		if (array[child] > array[parent]){
+			// 若孩子大于父亲, 则交换(只交换了值)
+			Swap(array, child, parent);
+			// 向下调整, 父亲走到孩子位置(把孩子位置赋给父亲), 
+			parent = child; 
+			// 由于给定的父结点是随机的(给定的父结点不一定是最后一个非叶子结点) 仍需向下判断,孩子继续向下走
+			child = 2 * parent + 1;
+		}
+		// 如果孩子不大于父亲 则不用动(为大堆) 跳出循环
+		else
+			break;
+	}
+}
 
-//void heapSort(int* array, int n){
-//	int end = n - 1;
-//	// 建大堆
-//	for (int i = (n - 2) / 2; i >= 0; --i){
-//		shiftdown(array, n, i);
-//	}
-//
-//	// 循环排序
-//	while (end > 0){
-//		// 交换堆顶和队尾
-//		swap(array, 0, end);
-//		// 堆顶到堆尾
-//		shiftDown(array, end, 0);
-//		--end;
-//	}
-//}
-//
-//// 5. 交换排序 
-//// 5.1 (冒泡排序): 
-//// 一趟排序: 相邻元素比较, 大的向后移动
-//// 每一趟排序可以保证把最大的值移动到末尾(升序, 如果是降序,刚好相反)
-//// 时间复杂度: 有序为O(N). 无序为O(N^2)
-//// 空间复杂度: O(1)
-//// 稳定性: 稳定(若相等则不会发生交换
-//// 数据敏感: 敏感 有序为O(N). 无序为O(N^2)
-//// 本身为一个递增序列的话, 是不需要交换的 所以可以在一趟循环后 通过判断是否发生了交换 来决定是否有序(没有发生交换 则为有序 可以停掉 不需要再去做冒泡)
-//void bubbleSort(int* array, int n){
-//	// 元素个数
-//	int end = n;
-//	// 剩余需排元素个数次循环
-//	while (end > 0){
-//		// 一趟排序
-//		// 两种循环写法 flag只是用来判断是否进行了交换 0则交换了 无论交换几次, 1则没交换
-//		int flag = 1;
-//		for (int i = 1; i < end; ++i){
-//		//for (int i = 0; i <end - 1; ++i); array[i] > array[i + 1];
-//			// i - 1(0++ 左元素)大的向后移动  相等不会发生交换
-//			// 只要发生了一次交换 flag 就等于0了,
-//			if (array[i - 1] > array[i]){
-//				flag = 0;
-//				swap(array, i - 1, i);
-//			}
-//		}
-//		// 如果前者不大于后者 则为正常升序 则flag依旧为1
-//		if (flag)
-//			break;
-//
-//		// 每循环一趟 可以再少遍历一个元素 所以--end
-//		--end;
-//	}
-//}
+void heapSort(int* array, int n){
+	int end = n - 1;
+	// 建大堆(从最后一个非叶子结点开始对所有父结点进行向下调整直到根结点 ---> 为(n - 2) / 2 ).
+	for (int i = (n - 2) / 2; i >= 0; --i){
+		// shiftdown只是一次调整(给定父结点到叶子)
+		shiftDown(array, n, i);
+	}
+
+	// 循环排序
+	while (end > 0){
+		// 先交换堆顶和队尾
+		Swap(array, 0, end);
+		// 再对剩余元素进行堆顶到堆尾(此时给定结点为根结点) 由于一开始是n个元素, 所以这里的end(n-1)是对的
+		shiftDown(array, end, 0);
+		--end;
+	}
+}
+
+// 5. 交换排序 
+// 5.1 (冒泡排序): 
+// 一趟排序: 相邻元素比较, 大的向后移动
+// 每一趟排序可以保证把最大的值移动到末尾(升序, 如果是降序,刚好相反)
+// 时间复杂度: 有序为O(N). 无序为O(N^2)
+// 空间复杂度: O(1)
+// 稳定性: 稳定(若相等则不会发生交换
+// 数据敏感: 敏感 有序为O(N). 无序为O(N^2)
+// 本身为一个递增序列的话, 是不需要交换的 所以可以在一趟循环后 通过判断是否发生了交换 来决定是否有序(没有发生交换 则为有序 可以停掉 不需要再去做冒泡)
+void bubbleSort(int* array, int n){
+	// 元素个数
+	int end = n;
+	// 剩余需排元素个数次循环
+	while (end > 0){
+		// 一趟排序
+		// 两种循环写法 flag只是用来判断是否进行了交换 0则交换了 无论交换几次, 1则没交换
+		int flag = 1;
+		for (int i = 1; i < end; ++i){
+		//for (int i = 0; i <end - 1; ++i); array[i] > array[i + 1];
+			// i - 1(0++ 左元素)大的向后移动  相等不会发生交换
+			// 只要发生了一次交换 flag 就等于0了,
+			if (array[i - 1] > array[i]){
+				flag = 0;
+				Swap(array, i - 1, i);
+			}
+		}
+		// 如果前者不大于后者 则为正常升序 则flag依旧为1
+		if (flag)
+			break;
+
+		// 每循环一趟 可以再少遍历一个元素 所以--end
+		--end;
+	}
+}
 // 5.2 快排:交换达到排序(升序)
+// 获取中间值(在partion3中用了)
+int getMid(int* array, int left, int right){
+	int mid = left + (right - left) / 2;
+
+	if (array[mid] > array[left]){  //  left mid
+		if (array[mid] < array[right]) // left mid right
+			return mid;
+		else{
+			if (array[left] > array[right]) //  right left mid
+				return left;
+			else                           // left right mid
+				return right;
+		}
+	}
+	else{  //  mid left
+		if (array[mid] > array[right])  //  right mid left
+			return mid;
+		else{     // mid right 
+			if (array[left] < array[right])  //  mid left right
+				return left;
+			else                            // mid right left
+				return right;
+		}
+	}
+}
 // (1). hoare法:  每次选择一个基准值 大于和小于的分别放置基准值的后面和前面 大放后 小放前
 // 然后变换基准值, 从而确定每一个基准值的位置, 逐渐趋近于有序 
-// 
 // 如果第一个值为key, 首先从后向前找小于key的值, 相遇位置的数据一定小于key
 // 如果最后一个值为key, 首先从前往后找大于key的值, 相遇位置的数据大于key,
 int partion(int* array, int begin, int end){
@@ -241,7 +277,7 @@ int partion(int* array, int begin, int end){
 		// 若两者(end和begin)还没相遇, 继续循环 先找小于key的值,
 		// 大的或者小的有一个没找到 才会相遇, 
 		// 若是大的没找见 则会被小的end拦截 相遇在end处,
-		// 若是小的没找见,则会被拦在
+		// 若是小的没找见,则会被拦在相遇地方 
 
 		Swap(array, begin, end);
 	}
@@ -276,7 +312,10 @@ int partion2(int* array, int begin, int end){
 // prev和cur连续式 说明中间没有大于key的值 若不连续 说明 中间有大于key的值
 // 不连续时  将cur的位置的元素和prev+1的值交换 循环 当cur>=end时, 让array[prev] = key
 int partion3(int* array, int begin, int end){
-	
+
+	int mid = getMid(array, begin, end);
+	Swap(array, mid, begin);
+
 	int prev = begin;
 	int cur = begin + 1;
 	int key = array[begin];
@@ -293,14 +332,88 @@ int partion3(int* array, int begin, int end){
 	// array[prev] = key; 这个会覆盖prev的值
 	return prev;
 }
+// 理想情况下: 假设递归的深度为n, 递归总次数为2^n-1 
+// 假设元素个数为n,高度为logn, 每一层都是对近似n个数进行操作 (满二叉树结点为n,高度为log(n+1)
+// 时间复杂度: 平均O(nlogn),每层执行次数不大于n(会去掉关键值), 每层操作个数(n)*高度(logn)
+//          数据有序时为O(N^2) (递归深度 = 元素个数 每层有一区间数据为空 每层执行次数为等差数列 比上一层减少1 每次只给基准值把位置确定好 就一直在调递归)
+// 时间不能复用 空间(函数栈帧)可以复用 看每一个函数栈帧需要多少 再看需要压几个栈帧 调用结束 释放空间
+// 空间复杂度: 为最大的递归调用深度O(logn), 开了多少个局部变量的空间  每个函数内部是O(1) 所以一个递归为O(1)的复杂度 总的复杂度为总共调用的空间 每层O(1) logn层
+// 递归调用相当于压栈 出栈 如果一直连续调递归(在压栈) 会造成栈溢出
+// 稳定性: 不稳定 --> 划分时数据会产生交换, 可能会导致相对位置发生变化
+// 数据敏感:
+
+// 未优化
 void quickSort(int* array, int begin, int end){
 	if (begin >= end)
 		return;
 	int mid = partion(array, begin, end);
-	// 划分区间
+	// int mid = partion2(array, begin, end);
+	// int mid = partion3(array, begin, end);
+
+	// 划分区间(最后一层区间中只有一个元素)
 	// 先给基准值的左边划分
 	quickSort(array, begin, mid - 1);
 	// 再给基准值的右边划分
 	quickSort(array, mid + 1, end);
 
+}
+
+// 快速排序优化(避免有序数据排序产生栈溢出):
+// 1. 小区间优化: 小区间直接调用其他排序算法, 不执行递归 
+// 作用不明显 因为编辑器本身会对简单递归进行优化
+// 2. 三数取中法: 从待划分的数据中, 选取三个数, 从三个数中选择中间值作为基准值 
+// 目的是让区间的划分更加均衡, 减少递归的深度
+void quickSort2(int* array, int begin, int end){
+	
+	if (begin >= end)
+		return;
+
+	if (end - begin + 1 < 10){
+		shellSort(array + begin, end - begin + 1);
+	}
+
+	else{
+		int mid = partion3(array, begin, end);
+
+	// 划分区间(最后一层区间中只有一个元素)
+	// 先给基准值的左边划分
+	quickSort(array, begin, mid - 1);
+	// 再给基准值的右边划分
+	quickSort(array, mid + 1, end);
+	
+	}
+}
+
+// 非递归: 记录每一个确定的起始和结束位置, 然后按照先划分大区间, 再划分小区间的顺序完成所有的划分
+// 1. 用栈保存区间的起始和结束位置
+void quickSortNor(int* array, int n){
+	Stack st;
+	stackInit(&st, 10);
+
+	// 首先保存大区间
+	if (n > 0){
+		stackPush(&st, n - 1);
+		stackPush(&st, 0);
+		// 给所有区间进行划分	
+		}
+	while (stackEmpty(&st) != 1){
+		// 还有区间没有划分
+		// 取出一个区间的起始和结束位置
+		int left = stackTop(&st);
+		stackPop(&st);
+		int right = stackTop(&st);
+		stackPop(&st); 
+		// 划分当前区间
+		int div = partion3(array, left, right);
+		// 保存自取件的起始和结束位置
+		if (left < div - 1){
+			stackPush(&st, div - 1);
+			stackPush(&st, left);
+		}
+		if (div + 1 < right){
+			stackPush(&st, right);
+			stackPush(&st, div + 1);
+
+		}
+	}
 }
