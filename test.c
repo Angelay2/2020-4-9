@@ -19,9 +19,16 @@ void test1(){
 	int* copy = (int*)malloc(num * sizeof(int));
 	int* copy2 = (int*)malloc(num * sizeof(int));
 	int* copy3 = (int*)malloc(num * sizeof(int));
+	int* copy4 = (int*)malloc(num * sizeof(int));
+	int* copy5 = (int*)malloc(num * sizeof(int));
+
+
 	memcpy(copy, array, sizeof(int)* num);
 	memcpy(copy2, array, sizeof(int)* num);
 	memcpy(copy3, array, sizeof(int)* num);
+	memcpy(copy4, array, sizeof(int)* num);
+	memcpy(copy5, array, sizeof(int)* num);
+
 	// 插入排序
 	printf("插入排序结果:\n");
 	printArray(array, num);
@@ -42,16 +49,55 @@ void test1(){
 	printArray(copy3, num);
 	selectSort2(copy3, num);
 	printArray(copy3, num);
+	// 堆排序
+	printf("堆排序结果:\n");
+	printArray(copy4, num);
+	heapSort(copy4, num);
+	printArray(copy4, num);
+	// 冒泡排序
+	/*printf("冒泡排序结果:\n");
+	printArray(copy5, num);
+	bubbleSort(copy5, num);
+	printArray(copy5, num);*/
+
+	
 
 }
+int test2(){
+	int array[] = { 10, -1, 2, 9, 3, 5, 7, 24, -5, 100 };
+	int num = sizeof(array) / sizeof(array[0]);
+	int* copy = (int*)malloc(num * sizeof(int));
+	
+	memcpy(copy, array, sizeof(int)* num);
+
+	int begin = 0;
+	int end = num - 1;
+	printf("快速排序结果:\n");
+	printArray(array, num);
+	quickSort(array, begin, end);
+	printArray(array, num);
+
+	printf("快排非递归排序结果:\n");
+	printArray(copy, num);
+	quickSortNor(copy, num);
+	printArray(copy, num);
+}
+
 // 效率
 int testTime(){
 	int n;
-	int* array, *copy,copy2 ;
+	int* array, *copy, *copy2, *copy3, *copy4, *copy5, *copy6, *copy7;
+	printf("输入未排序元素个数: \n");
 	scanf("%d", &n);
+
 	array = (int*)malloc(sizeof(int)* n);
 	copy = (int*)malloc(sizeof(int)* n);
 	copy2 = (int*)malloc(sizeof(int)* n);
+	copy3 = (int*)malloc(sizeof(int)* n);
+	copy4 = (int*)malloc(sizeof(int)* n);
+	copy5 = (int*)malloc(sizeof(int)* n);
+	copy6 = (int*)malloc(sizeof(int)* n);
+	copy7 = (int*)malloc(sizeof(int)* n);
 	srand(time(NULL));
 	for (int i = 0; i < n; ++i){
 		array[i] = rand();
@@ -59,33 +105,74 @@ int testTime(){
 
 	memcpy(copy, array, sizeof(int)* n);
 	memcpy(copy2, array, sizeof(int)* n);
+	memcpy(copy3, array, sizeof(int)* n);
+	memcpy(copy4, array, sizeof(int)* n);
+	memcpy(copy5, array, sizeof(int)* n);
+	memcpy(copy6, array, sizeof(int)* n);
+	memcpy(copy7, array, sizeof(int)* n);
+
+
 
 	size_t begin = clock();
 	insertSort(array, n);
 	size_t end = clock();
-	printf("%d\n", end - begin);
+	printf("插入排序所用时间为: %d\n", end - begin);
+
 
 	begin = clock();
 	shellSort(copy, n);
 	end = clock();
-	printf("%d\n", end - begin);
+	printf("希尔排序所用时间为: %d\n", end - begin);
 
 
+	begin = clock();
+	selectSort(copy2, n);
+	end = clock();
+	printf("选择1排序所用时间为: %d\n", end - begin);
+
+
+	begin = clock();
+	selectSort2(copy3, n);
+	end = clock();
+	printf("选择2排序所用时间为: %d\n", end - begin);
+
+
+	begin = clock();
+	heapSort(copy4, n);
+	end = clock();
+	printf("堆排序所用时间为: %d\n", end - begin);
+
+
+	begin = clock();
+	bubbleSort(copy5, n);
+	end = clock();
+	printf("冒泡排序所用时间为: %d\n", end - begin);
+
+	begin = clock();
+	quickSort(copy6, 0, n - 1);
+	end = clock();
+	printf("快速排序所用时间为: %d\n", end - begin);
+
+	// 栈溢出了, 时间复杂度变大了,数据大的时候 深度变大了, 递归调用更多
+	//begin = clock();
+	//quickSort(copy6, 0, n - 1);
+	//end = clock();
+	//printf("快速排序所用时间为: %d\n", end - begin);
+	//begin = clock();
+	//quickSort2(copy6, 0, n - 1);
+	//end = clock();
+	//printf("快速排序2(有序时)所用时间为: %d\n", end - begin);
+	begin = clock();
+	quickSort(copy7, 0, n - 1);
+	end = clock();
+	printf("快速排序非递归所用时间为: %d\n", end - begin);
 }
 
-int test3(){
-	int array[] = { 10, -1, 2, 9, 3, 5, 7, 24, -5, 100 };
-	int num = sizeof(array) / sizeof(array[0]);
-	int begin = array[0];
-	int end = array[num - 1];
-	printArray(array, num);
-	quickSort(array, begin, end);
-	printArray(array, num);
-}
 int main(){
 
 	test1();
-	//testTime();
+	test2();
+	testTime();
 	//test3();
 	system("pause");
 	return 0;
