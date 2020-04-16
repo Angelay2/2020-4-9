@@ -1,5 +1,7 @@
 #include "sort.h"
 #include "stack.h"
+#include "queue.h"
+#include <malloc.h>
 
 void Swap(int* array, int i, int j){
 	
@@ -380,13 +382,13 @@ void quickSort2(int* array, int begin, int end){
 	quickSort(array, begin, mid - 1);
 	// 再给基准值的右边划分
 	quickSort(array, mid + 1, end);
-	
 	}
 }
 
 // 非递归: 记录每一个确定的起始和结束位置, 然后按照先划分大区间, 再划分小区间的顺序完成所有的划分
 // 1. 用栈保存区间的起始和结束位置
-void quickSortNor(int* array, int n){
+// 空间复杂度: logn(树的高度 压栈出栈)
+void quickSortNor1(int* array, int n){
 	Stack st;
 	stackInit(&st, 10);
 
@@ -414,6 +416,172 @@ void quickSortNor(int* array, int n){
 			stackPush(&st, right);
 			stackPush(&st, div + 1);
 
+		}
+	}
+}
+// 快排非递归
+// 2. 用队列保存区间的起始和结束位置
+// 
+void quickSortNor2(int* array, int n){
+	//初始队列
+	Queue q;
+	queueInit(&q);
+	if (n > 1){
+		// 存放顺序: 先左后右
+		queuePush(&q, 0);
+		queuePush(&q, n - 1);
+	}
+	while (queueEmpty(&q) != 1){
+		// 从队头获取区间信息
+		int left = queueFront(&q);
+		queuePop(&q);
+		int right = queueFront(&q);
+		queuePop(&q);
+
+		// 划分
+		int div = partion3(array, left, right);
+		// 划分之后的区间入队
+		if (left < div - 1){
+			queuePush(&q, left);
+			queuePush(&q, div - 1);
+		}
+		if (div + 1 < right){
+			queuePush(&q, div + 1);
+			queuePush(&q, right);
+		}
+	}
+}
+
+// 归并排序: 合并已经有序的子区间(从底层开始归并, 先归并小区间, 再归并大区间 且都是相邻区间进行归并.
+// 适用于外排序(内存不能一次完整处理的排序)
+/*
+时间复杂度: 最好最坏都是 N(nlogn), 非常对称平衡的划分(不像快排是根据关键字划分), 因为是按照元素位置进行划分 
+空间复杂度: O(N) (借助了辅助空间 有多少的元素 借多少个空间) 递归仍然是O(logn) 但是小于N 取最大为O(N),
+稳定性: 稳定(相等的先放在最左边的, 
+数据敏感: 不敏感(都要走划分过程, 效率相同)
+*/
+
+// 先分解
+// 1. 先把大区间分解成子区间 
+// 2. 包含多个元素的子区间不一定有序
+// 3. 继续分解 
+// 4. 直到不能再分解(区间只有一个元素时不能再分解)
+// 5. 只有一个元素的子区间有序
+// 6. 合并有序的子区间
+// 再合并
+// 借助辅助空间进行归并, 最终进行拷贝
+void mergeInternal(int* array, int left, int mid, int right, int* tmp){// 假设mid为第一个区间的结束位置
+	// 有序子区间:[left,mid]和[mid+1, right]归并
+	int begin1 = left, end1 = mid;
+	int begin2 = mid + 1, end2 = right;
+	int idx = left;
+	// 归并
+	while (begin1 <= end1 && begin2 <= end2){
+		if (array[begin1] <= array[begin2])
+			tmp[idx++] = array[begin1++];
+		else
+			tmp[idx++] = array[begin2++];
+	}
+	// 保存剩余元素
+	if (begin1 <= end1)
+		memcpy(tmp + idx, array + begin1, sizeof(int)* (end1 - begin1 + 1));
+	if (begin2 <= end2)
+		memcpy(tmp + idx, array + begin2, sizeof(int)* (end2 - begin2 + 1));
+	// 当前区间已有序, 把辅助空间对应位置的元素拷回去
+	memcpy(array + left, tmp + left, sizeof(int)* (right - left + 1));
+}
+void merge(int* array, int left, int right, int* tmp){
+
+	// 区间只有一个元素 不需要分解 也不需要归并
+	if (left >= right)
+		return;
+
+	int mid = left + (right - left) / 2;
+	// 1. 分解
+	// 先分别进行子区间的归并排序
+	// 左子区间[left, mid]
+	merge(array, left, mid, tmp);
+	// 当左边的分为单个时 再到右边 再到单个 再合并 然后进行上层的分解左边
+	// 右子区间[mid+1, right]
+	merge(array, mid + 1, right, tmp);
+
+	// 2. 合并
+	// 前提: [left,mid], [mid+1, right]有序
+	// 归并: [left,mid], [mid+1, right]
+	// 变成有序大区间
+	mergeInternal(array, left, mid, right, tmp);
+}
+void mergeSort(int* array, int n){
+	int* tmp = (int*)malloc(sizeof(int)* n);
+	merge(array, 0, n - 1, tmp);
+	free(tmp);
+}
+
+// 非递归归并排序(不需要走分解)
+// 每次待归并的子区间的元素个数都是上一层的二倍(当奇数个数数据时 最后一个是被单独划分的 不参与归并 只在最后一层参与归并) 仍满足 1,2,4,8...
+void mergeSortNor(int* array, int n){
+	// 每次待归并的子区间元素个数
+	int num = 1;
+	int* tmp = (int*)malloc(sizeof(int)* n);
+	while (num < n){
+		// 每次都要把整个区间的元素进行归并
+		// 下一次归并 是下一批元素的归并
+		for (int i = 0; i < n; i += 2 * num){
+			int left = i;
+			int mid = i + num - 1;
+			
+			if (mid >= n - 1)// 表示剩下元素只能构建一个区间
+				//没有第二个区间, 不需要归并, 剩余的一个区间不需要归并
+				continue;
+
+			int right = i + 2 * num - 1;
+			// 判断第二个区间的结束位置是否越界
+			if (right >= n)
+				right = n - 1;
+
+			mergeInternal(array, left, mid, right, tmp);
+		}
+		num *= 2;
+	}
+	free(tmp);
+}
+
+// 计数排序(两个变量一个记录最大值, 一个记录最小值 用来计算数据范围 决定开多大的元素空间 )  不适合范围较大的排序 会造成很多的空间浪费 只适合小范围紧凑的
+// 统计每一个数据出现的次数
+/* 
+时间复杂度: O(N) max(长度 范围)的遍历次数  
+空间复杂度: range  
+稳定性:  没办法保证稳定, 都保存在计数数组的同一个位置
+数据敏感: 不敏感
+*/
+void countSort(int* array, int n){
+	// 先找到最大值和最小值
+	int max = array[0], min = array[0];
+	int range;
+	int* countArr;
+	int idx = 0;
+	for (int i = 1; i < n; ++i){
+		if (array[i] < min)
+			min = array[i];
+		if (array[i] > max)
+			max = array[i];
+	}
+	//数据范围
+	range = max - min + 1;
+	// 申请计数数组空间
+	countArr = (int*)malloc(sizeof(int)* range);
+	// calloc可以完成申请和0的初始化
+	// countArr = (int*)calloc(sizeof(int)*range);
+	memset(countArr, 0, sizeof(int)*range);
+	//记录每一个数据出现的次数
+	for (int i = 0; i < n; ++i){
+		countArr[array[i] - min]++;
+	}
+	// 遍历计数数组
+	for (int i = 0; i < range; ++i){
+		// 有可能有重复的数据 
+		while (countArr[i]--){
+			array[idx++] = i + min;
 		}
 	}
 }
